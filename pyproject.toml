@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "max-bot"
+version = "0.1.0"
+description = "Бот для мессенджера MAX с интеграцией GigaChat"
+authors = ["Ваше Имя <your.email@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4"
+maxapi = "^0.9.12"
+gigachat = '0.2.0b2'
+python-dotenv = "^1.0.0"
+pydantic = "^2.5.0"
+pydantic-core = "^2.41.5"
+pydantic-settings = "^2.8.1"
+sqlalchemy = "^2.0.40"
+httpx = "^0.26.0"
+alembic = "^1.16.5"
+uvicorn = "0.26.0"
+asyncpg = "^0.29.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.11.0"
+
+[tool.poetry.scripts]
+max-bot = "max_bot.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

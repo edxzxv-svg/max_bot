@@ -1,0 +1,46 @@
+version: '3.12'
+
+services:
+  max_bot_postgres:
+    image: postgres:17-alpine
+    container_name: max_bot_postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=max_bot_postgres
+    ports:
+      - "10101:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d max_bot_postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - bot_network
+
+  max_chatbot:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: max_bot
+    volumes:
+      - ./src:/app/src  # Для hot-reload при разработке
+    depends_on:
+      max_bot_postgres:
+        condition: service_healthy
+    networks:
+      - bot_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  bot_network:
+    driver: bridge

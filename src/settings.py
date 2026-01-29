@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,10 +9,11 @@ class EnvSettings(BaseSettings):
         extra="ignore",
     )
 
+
 class GigaChatSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="GIGACHAT_")
 
-    TOKEN: str = '...'
+    TOKEN: str = ""
 
     # CLIENT_ID: str = '...'
     # CLIENT_SECRET: str = '...'
@@ -27,10 +26,11 @@ class GigaChatSettings(BaseSettings):
     # # SSL Settings
     # VERIFY_SSL: bool =True
 
+
 class MaxSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MAX_")
-    TOKEN: str = '...'
-    CLIENT_ID: str = '...'
+    TOKEN: str = ""
+    CLIENT_ID: str = ""
 
 
 class PostgresSettings(BaseSettings):
@@ -43,6 +43,7 @@ class PostgresSettings(BaseSettings):
     POOL_SIZE: int = 20
     MAX_OVERFLOW: int = 5
 
+
 class AppSettings(EnvSettings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
@@ -52,10 +53,12 @@ class AppSettings(EnvSettings):
     CHAT_HISTORY_LIMIT: int = 10
     RATE_LIMIT_PER_USER: int = 30
 
+
 class Config(EnvSettings):
     app: AppSettings = AppSettings()
     gigachat: GigaChatSettings = GigaChatSettings()
     max: MaxSettings = MaxSettings()
     postgres: PostgresSettings = PostgresSettings()
+
 
 settings = Config()

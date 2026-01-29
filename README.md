@@ -42,7 +42,7 @@ cp .env.example .env
 4. **Установка и запуск**
 
 ```bash
-docker-compose up -d --build
+docker-compose up -d --buuild
 ```
 
 ## ✨ Возможности

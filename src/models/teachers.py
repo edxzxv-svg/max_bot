@@ -1,8 +1,7 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import Date, Integer, String, text
+from sqlalchemy import String, text, Date, Integer
 from sqlalchemy.orm import Mapped, mapped_column
-
 from src.models.base import Base
 
 
@@ -35,23 +34,35 @@ class Teacher(Base):
         Date,
         comment="Дата рождения",
     )
-    employment_date = mapped_column(Date, comment="Дата трудоустройства")
+    employment_date = mapped_column(
+        Date,
+        comment="Дата трудоустройства"
+    )
     total_years_at_hire = mapped_column(
-        Integer, comment="Общий стаж (лет) на дату приема"
+        Integer,
+        comment="Общий стаж (лет) на дату приема"
     )
     total_months_at_hire = mapped_column(
-        Integer, comment="Общий стаж (месяцев) на дату приема"
+        Integer,
+        comment="Общий стаж (месяцев) на дату приема"
     )
     total_days_at_hire = mapped_column(
-        Integer, comment="Общий стаж (дней) на дату приема"
+        Integer,
+        comment="Общий стаж (дней) на дату приема"
     )
     teacher_years_at_hire = mapped_column(
-        Integer, comment="Педагогический стаж (лет) на дату приема"
+        Integer,
+        comment="Педагогический стаж (лет) на дату приема"
     )
     teacher_months_at_hire = mapped_column(
-        Integer, comment="Педагогический стаж (месяцев) на дату приема"
+        Integer,
+        comment="Педагогический стаж (месяцев) на дату приема"
     )
     teacher_days_at_hire = mapped_column(
-        Integer, comment="Педагогический стаж (дней) на дату приема"
+        Integer,
+        comment="Педагогический стаж (дней) на дату приема"
     )
-    education = mapped_column(String(50), comment="Образование")
+    education = mapped_column(
+        String(50),
+        comment="Образование"
+    )

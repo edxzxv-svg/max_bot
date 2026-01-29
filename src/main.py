@@ -1,6 +1,5 @@
 import asyncio
 import logging
-
 from maxapi import Dispatcher, F
 from maxapi.types import MessageCreated
 
@@ -13,13 +12,11 @@ logger = logging.getLogger(__name__)
 bot = MaxBot(settings.max.TOKEN)
 dp = Dispatcher()
 
-
-@dp.message_created(F.message.body.text)   # type: ignore[untyped-decorator]
-async def handle_message_created(event: MessageCreated) -> None:
+@dp.message_created(F.message.body.text)
+async def handle_message_created(event: MessageCreated):
     await bot.handle_message_created(event)
 
-
-async def main() -> None:
+async def main():
     await dp.start_polling(bot)
 
 

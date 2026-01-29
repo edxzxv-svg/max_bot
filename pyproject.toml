@@ -20,8 +20,10 @@ uvicorn = "0.26.0"
 asyncpg = "^0.29.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-black = "^23.11.0"
+ruff=">=0.14.4,<0.15.0"
+mypy=">=1.18.2,<2.0.0"
+pre-commit=">=4.5.1,<5.0.0"
+
 
 [tool.poetry.scripts]
 max-bot = "max_bot.__main__:main"
@@ -29,3 +31,83 @@ max-bot = "max_bot.__main__:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py312"
+exclude = [
+    ".venv",
+    "migrations",
+    "tests",
+    "src/alembic",
+    "src/emums/prompts.py"
+]
+
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 20
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    #### modules
+    "ANN", #
+    "COM", #
+    "C90", #
+    "DJ",  #
+    "EXE", #
+    "T10", #
+    "TID", #
+
+    #### specific rules
+    "TD003", # Missing issue link for this TODO
+    "FIX002",  # Line contains TODO, consider resolving the issue
+    "ERA001", # Found commented-out code
+
+    "ARG002", # unused-method-argument
+    "ARG001", # unused-function-argument
+    "B008",
+    "D100", # Missing docstring in public module
+
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in `__init__`
+    "D400",
+
+    "RUF001", # String contains ambiguous
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+known-third-party = ["fastapi", "pydantic", "starlette"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.mypy]
+mypy_path = "src"
+files = ["src"]
+exclude = '^src/alembic/'
+python_version = "3.12"
+strict = true
+pretty = true
+
+ignore_missing_imports = false
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = "alembic.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "maxapi.*"
+ignore_missing_imports = true

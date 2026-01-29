@@ -1,7 +1,8 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import String, text, Date, Integer
+from sqlalchemy import Date, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.models.base import Base
 
 

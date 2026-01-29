@@ -1,11 +1,12 @@
-from typing import TypeVar, Generic, Any, Iterable
-from uuid import UUID
+from collections.abc import Iterable
+from typing import Any, Generic, TypeVar, cast
 
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import RowMapping, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-T = TypeVar("T")
+from src.models import Base
+
+T = TypeVar("T", bound=Base)
 
 
 class BaseRepository(Generic[T]):
@@ -19,12 +20,14 @@ class BaseRepository(Generic[T]):
 
     async def select(
         self, session: AsyncSession, **kwargs: Any
-    ) -> Iterable[T | dict[str, Any]]:
+    ) -> list[T | dict[str, Any]]:
         fields_to_select = kwargs.pop("fields", None)
         exclude_fields = kwargs.pop("exclude_fields", [])
 
         if fields_to_select:
-            selected_fields = [getattr(self.model, field) for field in fields_to_select]
+            selected_fields = [
+                getattr(self.model, field) for field in fields_to_select
+            ]
         else:
             selected_fields = [
                 field
@@ -42,7 +45,13 @@ class BaseRepository(Generic[T]):
 
         instances = await session.execute(stmt.filter_by(**kwargs))
         result = instances.mappings().all()
-        return [dict(item) if hasattr(item, "items") else item for item in result]
+        converted_result: list[T | dict[str, Any]] = []
+        for item in result:
+            if hasattr(item, "items") and isinstance(item, RowMapping):
+                converted_result.append(dict(item))
+            else:
+                converted_result.append(cast(T, item))
+        return converted_result
 
     async def get_all(
         self, session: AsyncSession, **kwargs: Any
@@ -57,8 +66,10 @@ class BaseRepository(Generic[T]):
         await session.commit()
         return instance
 
-    async def update(self, session: AsyncSession, instance: T, **kwargs: Any) -> T:
+    async def update(
+        self, session: AsyncSession, instance: T, **kwargs: Any
+    ) -> T:
         for key, value in kwargs.items():
             setattr(instance, key, value)
             session.add(instance)
-            return instance
+        return instance

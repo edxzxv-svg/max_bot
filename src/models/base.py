@@ -1,9 +1,6 @@
 from datetime import datetime
-from typing import Any
-from uuid import UUID
 
-from sqlalchemy import ARRAY, MetaData, func, types
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 metadata_obj = MetaData(
@@ -21,13 +18,6 @@ class Base(DeclarativeBase):
     __abstract__ = True
 
     metadata = metadata_obj
-
-    type_annotation_map = {
-        list[UUID]: ARRAY(types.UUID),
-        list[str]: ARRAY(types.String),
-        dict[str, Any]: JSONB,
-        int: types.BigInteger,
-    }
 
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.current_timestamp(),

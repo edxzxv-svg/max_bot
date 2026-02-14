@@ -1,20 +1,26 @@
 from datetime import UTC, datetime
+from typing import Any
 
 from gigachat import Chat, GigaChat, Messages, MessagesRole
 from gigachat.models import Storage
 from maxapi import Bot
 from maxapi.enums.parse_mode import ParseMode
-from maxapi.types import MessageCreated, ButtonsPayload
-from pyexpat.errors import messages
+from maxapi.types import MessageCreated, ButtonsPayload, BotCommand
 
+from commands import UserListCommand, BaseCommand
 from models import User
 from src.emums.persons import UserRole, UserStatus
 from src.emums.prompts import AgentProfile
 from src.repositories.user import UserRepository
 from src.session import async_session_maker
 from src.settings import settings
+import json
+import logging
 
 MAX_MESSAGE_LENGTH = 2048
+COMMAND_PREFIX = "/CMD:"
+
+logger = logging.getLogger(__name__)
 
 class MaxBot(Bot):
     def __init__(self, token: str, stream: bool = False):
@@ -24,14 +30,19 @@ class MaxBot(Bot):
         self.stream = stream
         self.thread_ids: dict[int, int] = {}
 
+        self.admin_commands: list[BaseCommand] = [
+            UserListCommand(self.user_repo)
+        ]
+
     async def handle_message_created(
         self,
         event: MessageCreated,
+        command_text: str | None = None,
     ) -> None:
 
         chat_id, user_id = event.get_ids()
         user = await self.get_user(user_id)
-        chat_request = await self.build_chat_request(event, user)
+        chat_request = await self.build_chat_request(event, user, command_text)
         payload = await self.build_buttons_payload(event)
 
         with GigaChat(
@@ -39,12 +50,16 @@ class MaxBot(Bot):
         ) as giga:
             if self.stream:
                 buff = ""
+                command_text = False
                 for chunk in giga.stream(chat_request):
                     if hasattr(chunk, 'storage') and hasattr(chunk.storage, 'thread_id'):
                         self.thread_ids[chat_id] = chunk.storage.thread_id
+
                     msg = chunk.choices[0].delta.content
-                    if not msg:
+                    if not msg or msg.startswith(COMMAND_PREFIX) or command_text:
+                        command_text += msg
                         continue
+
                     if len(buff) + len(msg) > MAX_MESSAGE_LENGTH:
                         await event.message.answer(
                             buff, parse_mode=self.parse_mode
@@ -52,25 +67,33 @@ class MaxBot(Bot):
                         buff = msg
                     else:
                         buff += msg
-                await event.message.answer(
-                    buff,
-                    parse_mode=self.parse_mode,
-                    attachments=[payload] if payload else None,
-                )
+                if buff:
+                    await event.message.answer(
+                        buff,
+                        parse_mode=self.parse_mode,
+                        attachments=[payload] if payload else None,
+                    )
+                elif command_text:
+                    await self.handle_message_created(event, command_text)
             else:
                 response = giga.chat(chat_request)
                 if hasattr(response, 'thread_id'):
                     self.thread_ids[chat_id] = response.thread_id
-                await event.message.answer(
-                    response.choices[0].message.content,
-                    parse_mode=self.parse_mode,
-                    attachments=[payload] if payload else None,
-                )
+                msg = response.choices[0].message.content
+                if msg.startswith(COMMAND_PREFIX):
+                    await self.handle_message_created(event, msg)
+                else:
+                    await event.message.answer(
+                        msg,
+                        parse_mode=self.parse_mode,
+                        attachments=[payload] if payload else None,
+                    )
 
     async def build_chat_request(
         self,
         event: MessageCreated,
-        user: User
+        user: User,
+        command_text: str | None = None,
     ) -> Chat:
         max_tokens: int | None = 200
         model = "GigaChat"
@@ -89,21 +112,22 @@ class MaxBot(Bot):
         )
 
         if user.role == UserRole.ADMIN:
-            model = "GigaChat-MAX"
+            # model = "GigaChat-MAX"
             max_tokens = 1000
         elif user.role == UserRole.TEACHER:
-            model = "GigaChat-Pro"
+            # model = "GigaChat-Pro"
             max_tokens = None
         elif user.role == UserRole.STUDENT:
             max_tokens = 500
 
         messages: list[Messages] = []
+        content = await self.build_system_prompt(AgentProfile.SCHOOL_ASSISTANT_PROMPT_2, user, command_text)
 
         if not thread_id:
             messages.append(
                 Messages(
                     role=MessagesRole.SYSTEM,
-                    content=self.build_system_prompt(AgentProfile.SCHOOL_ASSISTANT_PROMPT_2, user)
+                    content=content
                 ),
             )
 
@@ -114,23 +138,91 @@ class MaxBot(Bot):
             ),
         )
 
+        functions = []
+        if user.role == UserRole.ADMIN:
+            functions += [
+                {
+                    "name": "weather_forecast",
+                    "description": "Возвращает температуру на заданный период",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "Местоположение, например, название города"
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": [
+                                    "celsius",
+                                    "fahrenheit"
+                                ],
+                                "description": "Единицы измерения температуры"
+                            },
+                            "num_days": {
+                                "type": "integer",
+                                "description": "Период, для которого нужно вернуть"
+                            }
+                        },
+                        "required": [
+                            "location",
+                            "num_days"
+                        ]
+                    },
+                    "return_parameters": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "description": "Статус",
+                                "enum": [
+                                    "success",
+                                    "fail"
+                                ],
+                                "type": "string"
+                            },
+                            "location": {
+                                "type": "string",
+                                "description": "Местоположение, например, название города"
+                            },
+                            "temperature": {
+                                "type": "integer",
+                                "description": "Температура для заданного местоположения"
+                            },
+                            "forecast": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Описание погодных условий"
+                            },
+                            "error": {
+                                "type": "string",
+                                "description": "Возвращается при возникновении ошибки. Содержит описание ошибки"
+                            }
+                        }
+                    }
+                }
+            ]
+
         chat_request = Chat(
             stream=self.stream,
             model=model if not thread_id else None,
             messages=messages,
             max_tokens=max_tokens,
             storage=storage,
+            functions=functions,
         )
         return chat_request
 
-    def build_system_prompt(
+    async def build_system_prompt(
         self,
         base_prompt: str,
         user: User,
+        command_text: str | None = None,
     ) -> str:
         prompt_items = [
             base_prompt,
-            f"Используй в ответах разметку {self.parse_mode}",
+            f"В ответах пользователю используй разметку {self.parse_mode}",
         ]
 
         user_profile = {'role': user.role}
@@ -138,6 +230,30 @@ class MaxBot(Bot):
             user_profile['name'] = user.name
 
         prompt_items.append(f"Информация о собеседнике: {user_profile}")
+
+        if command_text:
+            args = {}
+            try:
+                command_info = json.loads(command_text)
+                for command in self.admin_commands:
+                    if command.id in command_info.get("command_id"):
+                        args = command_info.get("args", {})
+                        break
+                else:
+                    command = None,
+
+                if command:
+                    result = await command.execute(**args)
+                    prompt_items.append(
+                        f"Была выполнена команда: {command_text}, "
+                        f"Получен результат: {result}"
+                    )
+            except Exception as e:
+                logger.exception(command_text)
+                prompt_items.append(
+                    f"Команда: {command_text} была выполнена с ошибкой."
+                )
+
         return ";\n".join(prompt_items)
 
     async def build_buttons_payload(self, event: MessageCreated) -> ButtonsPayload | None:

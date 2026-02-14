@@ -5,9 +5,8 @@ from gigachat.models import Storage
 from maxapi import Bot
 from maxapi.enums.parse_mode import ParseMode
 from maxapi.types import MessageCreated, ButtonsPayload
-from pyexpat.errors import messages
 
-from models import User
+from src.models import User
 from src.emums.persons import UserRole, UserStatus
 from src.emums.prompts import AgentProfile
 from src.repositories.user import UserRepository
@@ -52,11 +51,12 @@ class MaxBot(Bot):
                         buff = msg
                     else:
                         buff += msg
-                await event.message.answer(
-                    buff,
-                    parse_mode=self.parse_mode,
-                    attachments=[payload] if payload else None,
-                )
+                if buff:
+                    await event.message.answer(
+                        buff,
+                        parse_mode=self.parse_mode,
+                        attachments=[payload] if payload else None,
+                    )
             else:
                 response = giga.chat(chat_request)
                 if hasattr(response, 'thread_id'):
@@ -89,10 +89,10 @@ class MaxBot(Bot):
         )
 
         if user.role == UserRole.ADMIN:
-            model = "GigaChat-MAX"
+            # model = "GigaChat-MAX"
             max_tokens = 1000
         elif user.role == UserRole.TEACHER:
-            model = "GigaChat-Pro"
+            # model = "GigaChat-Pro"
             max_tokens = None
         elif user.role == UserRole.STUDENT:
             max_tokens = 500

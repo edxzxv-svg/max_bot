@@ -9,12 +9,13 @@ from maxapi.types import MessageCreated, ButtonsPayload
 import json
 
 from commands import UserListCommand, BaseCommand
+from dependes import get_student_service, get_weather_service, get_user_repository
 from emums.prompts import AgentProfile
 from models import User
-from services import WeatherService
-from services.functions import WEATHER_FORECAST
+from schemes.request import StudentListRequest
+from services.functions import WEATHER_FORECAST_FUNCTION
+from services.functions.student import STUDENT_LIST_FUNCTION
 from src.emums.persons import UserRole, UserStatus
-from src.repositories.user import UserRepository
 from src.session import async_session_maker
 from src.settings import settings
 import logging
@@ -25,13 +26,18 @@ logger = logging.getLogger(__name__)
 
 
 class MaxBot(Bot):
-    def __init__(self, token: str, stream: bool = False):
+    def __init__(
+            self,
+            token: str,
+            stream: bool = False
+    ):
         super().__init__(token)
-        self.user_repo = UserRepository()
+        self.user_repo = get_user_repository()
         self.parse_mode = ParseMode.MARKDOWN
         self.stream = stream
         self.thread_ids: dict[int, int] = {}
-        self.weather_service = WeatherService()
+        self.weather_service =get_weather_service()
+        self.student_service = get_student_service()
         self.admin_commands: list[BaseCommand] = [
             UserListCommand(self.user_repo)
         ]
@@ -208,7 +214,8 @@ class MaxBot(Bot):
         )
 
         functions = [
-            WEATHER_FORECAST
+            WEATHER_FORECAST_FUNCTION,
+            STUDENT_LIST_FUNCTION,
         ]
 
         if user.role == UserRole.ADMIN:
@@ -281,7 +288,13 @@ class MaxBot(Bot):
                         num_days=args.get('num_days', 1),
                         format=args.get('format', 'celsius')
                     )
-
+                case "get_student_list":
+                    args = function_call.arguments
+                    result = await self.student_service.get_list(
+                        params=StudentListRequest.model_validate(args),
+                        user=user,
+                    )
+                    return result.model_dump(mode='json')
                 case _:
                     return {
                         "status": "fail",

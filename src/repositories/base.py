@@ -4,6 +4,7 @@ from typing import Any, Generic, TypeVar, cast
 from sqlalchemy import RowMapping, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from emums.persons import UserRole, UserStatus
 from src.models import Base
 
 T = TypeVar("T", bound=Base)

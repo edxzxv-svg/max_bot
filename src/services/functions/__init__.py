@@ -1,5 +1,5 @@
-from .weather import WEATHER_FORECAST
+from .weather import WEATHER_FORECAST_FUNCTION
 
 __all__ = [
-    WEATHER_FORECAST
+    WEATHER_FORECAST_FUNCTION
 ]

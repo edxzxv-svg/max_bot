@@ -1,4 +1,4 @@
-WEATHER_FORECAST = {
+WEATHER_FORECAST_FUNCTION = {
     "name": "weather_forecast",
     "description": "Возвращает температуру на заданный период",
     "parameters": {

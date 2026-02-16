@@ -1,3 +1,7 @@
-from .meteo import WeatherService
+from .weather import WeatherService
+from .student import StudentService
 
-__all__ = ["WeatherService"]
+__all__ = [
+    "WeatherService",
+    "StudentService",
+]

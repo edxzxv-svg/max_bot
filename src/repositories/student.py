@@ -45,7 +45,7 @@ class StudentRepository(BaseRepository[Student]):
         if class_numbers:
             stmt = stmt.where(Student.class_number.in_(class_numbers))
 
-        if class_numbers:
+        if class_parallels:
             stmt = stmt.where(Student.class_parallel.in_(class_parallels))
 
         result = await session.execute(stmt)

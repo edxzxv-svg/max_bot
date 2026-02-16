@@ -9,11 +9,11 @@ from maxapi.types import MessageCreated, ButtonsPayload
 import json
 
 from commands import UserListCommand, BaseCommand
-from dependes import get_student_service, get_weather_service, get_user_repository
+from dependes import get_student_service, get_weather_service, get_user_repository, get_teacher_service
 from emums.prompts import AgentProfile
 from models import User
-from schemes.request import StudentListRequest
-from services.functions import WEATHER_FORECAST_FUNCTION
+from schemes.request import StudentListRequest, TeacherListRequest
+from services.functions import WEATHER_FORECAST_FUNCTION, TEACHER_LIST_FUNCTION
 from services.functions.student import STUDENT_LIST_FUNCTION
 from src.emums.persons import UserRole, UserStatus
 from src.session import async_session_maker
@@ -38,6 +38,7 @@ class MaxBot(Bot):
         self.thread_ids: dict[int, int] = {}
         self.weather_service =get_weather_service()
         self.student_service = get_student_service()
+        self.teacher_service = get_teacher_service()
         self.admin_commands: list[BaseCommand] = [
             UserListCommand(self.user_repo)
         ]
@@ -215,12 +216,23 @@ class MaxBot(Bot):
 
         functions = [
             WEATHER_FORECAST_FUNCTION,
-            STUDENT_LIST_FUNCTION,
         ]
 
-        if user.role == UserRole.ADMIN:
-            functions += [
-        ]
+        match user.role:
+            case UserRole.ADMIN:
+                functions += [
+                    STUDENT_LIST_FUNCTION,
+                    TEACHER_LIST_FUNCTION
+                ]
+            case UserRole.TEACHER:
+                functions += [
+                    STUDENT_LIST_FUNCTION,
+                    TEACHER_LIST_FUNCTION
+                ]
+            case UserRole.STUDENT:
+                functions += [
+                    STUDENT_LIST_FUNCTION,
+                ]
 
         chat_request = Chat(
             stream=self.stream,
@@ -295,12 +307,18 @@ class MaxBot(Bot):
                         user=user,
                     )
                     return result.model_dump(mode='json')
+                case "get_teacher_list":
+                    args = function_call.arguments
+                    result = await self.teacher_service.get_list(
+                        params=TeacherListRequest.model_validate(args),
+                        user=user,
+                    )
+                    return result.model_dump(mode='json')
                 case _:
                     return {
                         "status": "fail",
                         "error": f"Function {function_call.name} not implemented"
                     }
-
         except Exception as e:
             logger.error(f"Error executing function: {e}")
             return {

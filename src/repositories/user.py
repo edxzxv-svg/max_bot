@@ -3,7 +3,7 @@ from typing import Iterable, Any
 
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.functions import coalesce, func
+from sqlalchemy.sql.functions import func
 
 from emums.persons import UserRole, UserStatus
 from src.models import User
@@ -26,7 +26,7 @@ class UserRepository(BaseRepository[User]):
         stmt = select(self.model).filter_by(**kwargs)
 
         if roles:
-            stmt = stmt.where(self.model.roles.in_(roles))
+            stmt = stmt.where(self.model.role.in_(roles))
 
         if states:
             stmt = stmt.where(self.model.status.in_(states))

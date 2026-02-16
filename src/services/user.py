@@ -3,30 +3,43 @@ from emums import RequestStatus
 from emums.persons import UserRole
 from models import User
 from repositories.user import UserRepository
-from schemes.request import StudentListRequest
+from schemes.request import StudentListRequest, SetNameRequest
 from repositories.student import StudentRepository
+from schemes.response import SetNameResponse
 from schemes.response.student import StudentListResponse, StudentBrief
 from session import async_session_maker
 
 
-class StudentService:
+class UserService:
     def __init__(
             self,
-            student_repo: StudentRepository,
             user_repo: UserRepository,
     ):
-        self.student_repo = student_repo
         self.user_repo = user_repo
+
+    async def set_name(
+            self,
+            params: SetNameRequest,
+            user: User,
+    ) -> SetNameResponse:
+        pass
+
+    async def set_role(
+            self,
+            params: SetRoleRequest,
+            user: User,
+    ) -> SetRoleResponse:
+        pass
 
     async def get_list(
             self,
-            params: StudentListRequest,
+            params: UserListRequest,
             user: User,
-    ) -> StudentListResponse:
+    ) -> UserListResponse:
         async with async_session_maker() as session:
             match user.role:
                 case UserRole.STUDENT:
-                    student = await self.student_repo.get_by(session, user_id=user.user_id)
+                    student = await self.student_repo.get_by(session, id=user.user_id)
                     if not student:
                         return StudentListResponse(
                             status=StudentListResponse.Status.FAILED,

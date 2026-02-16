@@ -15,18 +15,6 @@ class GigaChatSettings(BaseSettings):
 
     TOKEN: str = ""
 
-    # CLIENT_ID: str = '...'
-    # CLIENT_SECRET: str = '...'
-    # SCOPE: str = "GIGACHAT_API_PERS"
-    # MODEL: str = "GigaChat"
-    #
-    # TEMPERATURE: float = 0.7
-    # MAX_TOKENS: int = 1024
-    #
-    # # SSL Settings
-    # VERIFY_SSL: bool =True
-
-
 class MaxSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MAX_")
     TOKEN: str = ""

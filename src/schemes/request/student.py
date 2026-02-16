@@ -98,7 +98,7 @@ class StudentListRequest(BaseModel):
     class_numbers: list[int] | None =  Field(
         default=None,
         title="Класс",
-        description="Класс в котором цчит",
+        description="Класс ученика",
         examples=[9, 8, 0],
     )
     class_parallels: list[str] | None =  Field(

@@ -3,10 +3,22 @@ from datetime import date
 from pydantic import BaseModel, Field
 from emums import RequestStatus
 
-class StudentBrief(BaseModel):
-    full_name: str = Field(
-        title="ФИО",
-        description="ФИО ученика",
+class ScheduleRow(BaseModel):
+    day_of_week: int = Field(
+        title="День недели",
+        description="День недели",
+        ge=1,
+        le=7,
+    )
+    lesson_number: int = Field(
+        title="Номер урока",
+        description="Номер урока",
+        ge=1,
+        le=24,
+    )
+    subject: str = Field(
+        title="Предмет",
+        description="Предмет",
         min_length=2,
         max_length=100,
     )
@@ -22,18 +34,18 @@ class StudentBrief(BaseModel):
         min_length=1,
         max_length=1,
     )
-    birth_day: date = Field(
-        title="Дата рождения",
-        description="Дата рождения ученика",
+    room: int | None = Field(
+        title="Кабинет",
+        description="Кабинет",
+        ge=1,
     )
-
-class StudentListResponse(BaseModel):
+class ScheduleResponse(BaseModel):
     status: RequestStatus = Field(
         None,
         title="Статус",
         description="Статус запроса",
     )
-    data: list[StudentBrief] = Field(
+    data: list[ScheduleRow] = Field(
         default_factory=list,
         title="Результат",
         description="Результат запроса",

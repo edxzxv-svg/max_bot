@@ -3,37 +3,38 @@ from datetime import date
 from pydantic import BaseModel, Field
 from emums import RequestStatus
 
-class StudentBrief(BaseModel):
+class TeacherResponse(BaseModel):
     full_name: str = Field(
         title="ФИО",
-        description="ФИО ученика",
+        description="ФИО учителя",
         min_length=2,
         max_length=100,
     )
-    class_number: int = Field(
-        title="Класс",
-        description="Класс ученика",
-        ge=0,
-        le=11,
-    )
-    class_parallel: str = Field(
-        title="Параллель",
-        description="Параллель класса",
-        min_length=1,
-        max_length=1,
-    )
     birth_day: date = Field(
+        date,
         title="Дата рождения",
-        description="Дата рождения ученика",
+        description="Дата рождения учителя",
+    )
+    employment_date: date | None = Field(
+        None,
+        title="Дата трудоустройства",
+        description="Дата трудоустройства учителя",
+    )
+    education: str | None = Field(
+        None,
+        title="Образование",
+        description="Уровень образования",
+        min_length=2,
+        max_length=100,
     )
 
-class StudentListResponse(BaseModel):
+class TeacherListResponse(BaseModel):
     status: RequestStatus = Field(
         None,
         title="Статус",
         description="Статус запроса",
     )
-    data: list[StudentBrief] = Field(
+    data: list[TeacherResponse] = Field(
         default_factory=list,
         title="Результат",
         description="Результат запроса",

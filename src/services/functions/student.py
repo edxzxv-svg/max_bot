@@ -59,8 +59,9 @@ STUDENT_LIST_FUNCTION = {
                     "type": "object",
                     "properties": {
                         "full_name": {"type": "string"},
-                        "class": {"type": "string"},
-                        "birth_date": {"type": "string"}
+                        "birth_day": {"type": "string"},
+                        "class_number": {"type": "integer"},
+                        "class_parallel": {"type": "string"}
                     }
                 },
                 "description": "Список учеников"

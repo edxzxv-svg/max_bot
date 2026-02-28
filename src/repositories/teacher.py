@@ -1,13 +1,13 @@
 from datetime import date, datetime, time
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models import Student
+from models import  Teacher
 from .base import BaseRepository
 
 
-class StudentRepository(BaseRepository[Student]):
+class TeacherRepository(BaseRepository[Teacher]):
     def __init__(self) -> None:
-        super().__init__(Student)
+        super().__init__(Teacher)
 
     async def get_list(
             self,
@@ -15,11 +15,11 @@ class StudentRepository(BaseRepository[Student]):
             first_names: list[str] | None = None,
             last_names: list[str] | None = None,
             second_names: list[str] | None = None,
-            start_date: date | None = None,
-            end_date: date | None = None,
-            class_numbers: list[int] | None = None,
-            class_parallels: list[str] | None = None,
-    ) -> list[Student]:
+            birth_day_ge: date | None = None,
+            birth_day_le: date | None = None,
+            employment_date_ge: date | None = None,
+            employment_date_le: date | None = None,
+    ) -> list[Teacher]:
         stmt = select(self.model)
 
         if first_names:
@@ -31,17 +31,17 @@ class StudentRepository(BaseRepository[Student]):
         if second_names:
             stmt = stmt.where(self.model.second_name.in_(second_names))
 
-        if start_date:
-            stmt = stmt.where(self.model.birth_day >= start_date)
+        if birth_day_ge:
+            stmt = stmt.where(self.model.birth_day >= birth_day_ge)
 
-        if end_date:
-            stmt = stmt.where(self.model.birth_day <= datetime.combine(end_date, time.max))
+        if birth_day_le:
+            stmt = stmt.where(self.model.birth_day <= datetime.combine(birth_day_le, time.max))
 
-        if class_numbers:
-            stmt = stmt.where(self.model.class_number.in_(class_numbers))
+        if employment_date_ge:
+            stmt = stmt.where(self.model.employment_date >= employment_date_ge)
 
-        if class_parallels:
-            stmt = stmt.where(self.model.class_parallel.in_(class_parallels))
+        if employment_date_le:
+            stmt = stmt.where(self.model.employment_date <= datetime.combine(employment_date_le, time.max))
 
         result = await session.execute(stmt)
         return result.scalars().all() if result else []

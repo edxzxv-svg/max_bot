@@ -9,12 +9,15 @@ from maxapi.types import MessageCreated, ButtonsPayload
 import json
 
 from commands import UserListCommand, BaseCommand
-from dependes import get_student_service, get_weather_service, get_user_repository, get_teacher_service
+from dependes import (
+    get_student_service, get_weather_service, get_user_repository, get_teacher_service, get_schedule_service,
+    get_call_service, get_student_repository, get_teacher_repository
+)
 from emums.prompts import AgentProfile
-from models import User
-from schemes.request import StudentListRequest, TeacherListRequest
-from services.functions import WEATHER_FORECAST_FUNCTION, TEACHER_LIST_FUNCTION
-from services.functions.student import STUDENT_LIST_FUNCTION
+from models import User, Student, Teacher
+from schemes.request import StudentListRequest, TeacherListRequest, ScheduleRequest, CallRequest
+from services.functions import WEATHER_FORECAST_FUNCTION, TEACHER_LIST_FUNCTION, SCHEDULE_FUNCTION
+from services.functions import STUDENT_LIST_FUNCTION, CALL_LIST_FUNCTION
 from src.emums.persons import UserRole, UserStatus
 from src.session import async_session_maker
 from src.settings import settings
@@ -33,12 +36,16 @@ class MaxBot(Bot):
     ):
         super().__init__(token)
         self.user_repo = get_user_repository()
+        self.student_repo = get_student_repository()
+        self.teacher_repo = get_teacher_repository()
         self.parse_mode = ParseMode.MARKDOWN
         self.stream = stream
         self.thread_ids: dict[int, int] = {}
         self.weather_service =get_weather_service()
         self.student_service = get_student_service()
         self.teacher_service = get_teacher_service()
+        self.schedule_service = get_schedule_service()
+        self.call_service = get_call_service()
         self.admin_commands: list[BaseCommand] = [
             UserListCommand(self.user_repo)
         ]
@@ -52,8 +59,9 @@ class MaxBot(Bot):
             return
 
         chat_id, user_id = event.get_ids()
-        user = await self.get_user(user_id)
-        chat_request = await self.build_chat_request(event, user)
+        user, profile = await self.get_user_profile(user_id)
+
+        chat_request = await self.build_chat_request(event, user, profile)
         payload = await self.build_buttons_payload(event)
 
         with GigaChat(
@@ -108,8 +116,8 @@ class MaxBot(Bot):
             event: MessageCreated,
     ) -> None:
         chat_id, user_id = event.get_ids()
-        user = await self.get_user(user_id)
-        chat_request = await self.build_chat_request(event, user)
+        user, profiler = await self.get_user_profile(user_id)
+        chat_request = await self.build_chat_request(event, user, profiler)
         payload = await self.build_buttons_payload(event)
 
         with GigaChat(
@@ -167,6 +175,7 @@ class MaxBot(Bot):
             self,
             event: MessageCreated,
             user: User,
+            profile: Student | Teacher | None = None,
     ) -> Chat:
         max_tokens: int | None = 200
         model = "GigaChat"
@@ -197,7 +206,11 @@ class MaxBot(Bot):
             max_tokens = 500
 
         messages = []
-        content = await self.build_system_prompt(AgentProfile.SCHOOL_ASSISTANT_PROMPT_2, user)
+        content = await self.build_system_prompt(
+            AgentProfile.SCHOOL_ASSISTANT_PROMPT_2,
+            user=user,
+            profile=profile,
+        )
 
         if not thread_id:
             messages.append(
@@ -222,16 +235,22 @@ class MaxBot(Bot):
             case UserRole.ADMIN:
                 functions += [
                     STUDENT_LIST_FUNCTION,
-                    TEACHER_LIST_FUNCTION
+                    TEACHER_LIST_FUNCTION,
+                    SCHEDULE_FUNCTION,
+                    CALL_LIST_FUNCTION,
                 ]
             case UserRole.TEACHER:
                 functions += [
                     STUDENT_LIST_FUNCTION,
-                    TEACHER_LIST_FUNCTION
+                    TEACHER_LIST_FUNCTION,
+                    SCHEDULE_FUNCTION,
+                    CALL_LIST_FUNCTION,
                 ]
             case UserRole.STUDENT:
                 functions += [
                     STUDENT_LIST_FUNCTION,
+                    SCHEDULE_FUNCTION,
+                    CALL_LIST_FUNCTION,
                 ]
 
         chat_request = Chat(
@@ -249,17 +268,29 @@ class MaxBot(Bot):
             self,
             base_prompt: str,
             user: User,
+            profile: Student | Teacher | None = None,
     ) -> str:
         prompt_items = [
             base_prompt,
             f"В ответах пользователю используй разметку {self.parse_mode}",
         ]
 
-        user_profile = {'role': user.role}
+        user_profile: dict [str, str | int] = {'role': user.role}
         if user.name:
             user_profile['name'] = user.name
 
-        prompt_items.append(f"Информация о собеседнике: {user_profile}")
+        if profile:
+            user_profile['last_name'] = profile.last_name
+            user_profile['first_name'] = profile.first_name
+            user_profile['second_name'] = profile.second_name
+            user_profile['birth_day'] = profile.birth_day.isoformat()
+
+            if isinstance(profile, Student):
+                user_profile['class_number'] = profile.class_number
+                user_profile['class_parallel'] = profile.class_parallel
+
+
+        prompt_items.append(f"Информация о собеседнике: user={user_profile}")
         return ";\n".join(prompt_items)
 
     async def build_buttons_payload(self, event: MessageCreated) -> ButtonsPayload | None:
@@ -267,7 +298,7 @@ class MaxBot(Bot):
         # buttons: list[ButtonsPayload] = []
         return payload
 
-    async def get_user(self, user_id: int) -> User:
+    async def get_user_profile(self, user_id: int) -> tuple[User, Student | Teacher | None] | None:
         async with async_session_maker() as session:
             user = await self.user_repo.get_by(session, user_id=user_id)
             if not user:
@@ -282,7 +313,11 @@ class MaxBot(Bot):
                     session, user, last_update_date=datetime.now(UTC)
                 )
 
-            return user
+            if user:
+                student = await self.student_repo.get_by(session, user_uuid=user.uuid)
+                teacher = await self.teacher_repo.get_by(session, user_uuid=user.uuid)
+
+            return user, student or teacher
 
     async def _execute_function(self, function_call: FunctionCall, user: User) -> dict[str, Any]:
         """Выполнение функции с учетом return_parameters"""
@@ -311,6 +346,20 @@ class MaxBot(Bot):
                     args = function_call.arguments
                     result = await self.teacher_service.get_list(
                         params=TeacherListRequest.model_validate(args),
+                        user=user,
+                    )
+                    return result.model_dump(mode='json')
+                case "get_schedule":
+                    args = function_call.arguments
+                    result = await self.schedule_service.get_list(
+                        params=ScheduleRequest.model_validate(args),
+                        user=user,
+                    )
+                    return result.model_dump(mode='json')
+                case "get_calls":
+                    args = function_call.arguments
+                    result = await self.call_service.get_list(
+                        params=CallRequest.model_validate(args),
                         user=user,
                     )
                     return result.model_dump(mode='json')

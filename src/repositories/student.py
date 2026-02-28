@@ -1,7 +1,7 @@
 from datetime import date, datetime, time
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import Student
+from src.models import Student
 from .base import BaseRepository
 
 

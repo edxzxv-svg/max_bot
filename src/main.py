@@ -20,6 +20,9 @@ dp = Dispatcher()
 async def handle_message_created(event: MessageCreated) -> None:
     await bot.handle_message_created(event)
 
+@dp.message_created(F.message.body.attachments)   # type: ignore[untyped-decorator]
+async def handle_attachments(event: MessageCreated) -> None:
+    await bot.handle_attachments(event)
 
 async def main() -> None:
     await dp.start_polling(bot)

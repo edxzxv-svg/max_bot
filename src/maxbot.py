@@ -1,12 +1,17 @@
 from datetime import UTC, datetime
 from typing import Any
 
+from pydub import AudioSegment
+import aiohttp
+import tempfile, os
 from gigachat import Chat, GigaChat, Messages, MessagesRole, FunctionCall
 from gigachat.models import Storage
 from maxapi import Bot
 from maxapi.enums.parse_mode import ParseMode
 from maxapi.types import MessageCreated, ButtonsPayload
 import json
+import speech_recognition as sr
+from speech_recognition import UnknownValueError
 
 from commands import UserListCommand, BaseCommand
 from dependes import (
@@ -24,6 +29,7 @@ from src.settings import settings
 import logging
 
 MAX_MESSAGE_LENGTH = 2048
+BASE_URL_FILES = "https://platform-api.max.ru/v1/files"
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +41,7 @@ class MaxBot(Bot):
             stream: bool = False
     ):
         super().__init__(token)
+        self.access_token = token
         self.user_repo = get_user_repository()
         self.student_repo = get_student_repository()
         self.teacher_repo = get_teacher_repository()
@@ -49,6 +56,7 @@ class MaxBot(Bot):
         self.admin_commands: list[BaseCommand] = [
             UserListCommand(self.user_repo)
         ]
+        self.recognizer = sr.Recognizer()
 
     async def handle_message_created(
             self,
@@ -110,6 +118,98 @@ class MaxBot(Bot):
             except Exception as e:
                 logger.error(e)
                 self.thread_ids.pop(chat_id)
+
+    async def handle_attachments(
+        self,
+        event: MessageCreated,
+    ) -> None:
+        if not event.message.body.attachments:
+            return
+
+        for attach in event.message.body.attachments:
+            file_name = ""
+            match attach.type:
+                case 'image':
+                    file_name = f"{attach.payload.token[0:15]}.riff"
+                    # file_name = file_name.replace("/", "_")
+                case 'file':
+                    file_name = attach.filename
+                case 'video':
+                    file_name = f"{attach.payload.token[0:15]}.mp4"
+                case 'audio':
+                    if text := await self.parse_audio(
+                        url=attach.payload.url,
+                        token=attach.payload.token,
+                    ):
+                        event.message.body.text = text
+                        await self.handle_message_created(event)
+                case _:
+                    logger.error(f"Unknown attachment type: {attach.type}")
+                    return
+
+    async def parse_audio(
+            self,
+            token: str,
+            url: str,
+            language="ru-RU"
+    ) -> str | None:
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    logger.error(f"Error of download audio: {response.status}")
+                    return None
+
+                audio_bytes = await response.read()
+
+                with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
+                    mp3_file.write(audio_bytes)
+                    mp3_path = mp3_file.name
+
+                wav_path = mp3_path.replace('.mp3', '.wav')
+
+                try:
+                    # Конвертируем аудио
+                    audio = AudioSegment.from_mp3(mp3_path)
+                    audio = audio.set_channels(1)
+                    audio = audio.set_frame_rate(16000)
+                    audio = audio.apply_gain(-audio.dBFS)
+                    audio.export(wav_path, format="wav")
+
+                    # Распознаём речь
+                    with sr.AudioFile(wav_path) as source:
+                        audio_data = self.recognizer.record(source)
+
+                        try:
+                            text = self.recognizer.recognize_google(
+                                audio_data,
+                                language=language  # Добавил language
+                            )
+                            logger.info(f"Распознанный текст: {text}")
+                            return text
+
+                        except sr.UnknownValueError:
+                            logger.error("Google Speech Recognition не смог распознать аудио")
+                            return None
+
+                        except sr.RequestError as e:
+                            logger.error(f"Ошибка запроса к Google Speech Recognition: {e}")
+                            return None
+
+                except Exception as e:
+                    logger.error(f"Ошибка обработки аудио: {e}")
+                    return None
+
+                finally:
+                    # Удаляем временные файлы
+                    for path in [mp3_path, wav_path]:
+                        if os.path.exists(path):
+                            try:
+                                os.unlink(path)
+                            except:
+                                pass
+
 
     async def stream_handle_message_created(
             self,

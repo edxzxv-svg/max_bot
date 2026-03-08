@@ -1,7 +1,11 @@
+from collections.abc import Sequence
 from datetime import date, datetime, time
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models import Student
+
 from .base import BaseRepository
 
 
@@ -9,7 +13,7 @@ class StudentRepository(BaseRepository[Student]):
     def __init__(self) -> None:
         super().__init__(Student)
 
-    async def get_list(
+    async def get_list( # noqa: PLR0913
             self,
             session: AsyncSession,
             first_names: list[str] | None = None,
@@ -19,7 +23,7 @@ class StudentRepository(BaseRepository[Student]):
             end_date: date | None = None,
             class_numbers: list[int] | None = None,
             class_parallels: list[str] | None = None,
-    ) -> list[Student]:
+    ) -> Sequence[Student]:
         stmt = select(self.model)
 
         if first_names:
@@ -35,7 +39,9 @@ class StudentRepository(BaseRepository[Student]):
             stmt = stmt.where(self.model.birth_day >= start_date)
 
         if end_date:
-            stmt = stmt.where(self.model.birth_day <= datetime.combine(end_date, time.max))
+            stmt = stmt.where(
+                self.model.birth_day <= datetime.combine(end_date, time.max)
+            )
 
         if class_numbers:
             stmt = stmt.where(self.model.class_number.in_(class_numbers))

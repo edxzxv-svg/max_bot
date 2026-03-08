@@ -1,7 +1,8 @@
 
-from datetime import date
 from pydantic import BaseModel, Field
-from emums import RequestStatus
+
+from src.enums import RequestStatus
+
 
 class ScheduleRow(BaseModel):
     day_of_week: int = Field(
@@ -40,8 +41,8 @@ class ScheduleRow(BaseModel):
         ge=1,
     )
 class ScheduleResponse(BaseModel):
-    status: RequestStatus = Field(
-        None,
+    status: RequestStatus | None = Field(
+        default=None,
         title="Статус",
         description="Статус запроса",
     )
@@ -51,7 +52,7 @@ class ScheduleResponse(BaseModel):
         description="Результат запроса",
     )
     detail: str | None = Field(
-        None,
+        default=None,
         title="Детали статуса",
         description="Детали статуса",
     )

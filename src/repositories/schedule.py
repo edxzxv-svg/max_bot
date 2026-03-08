@@ -1,6 +1,10 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import  Schedule
+
+from src.models import Schedule
+
 from .base import BaseRepository
 
 
@@ -8,7 +12,7 @@ class ScheduleRepository(BaseRepository[Schedule]):
     def __init__(self) -> None:
         super().__init__(Schedule)
 
-    async def get_list(
+    async def get_list( # noqa: PLR0913
             self,
             session: AsyncSession,
             class_numbers: list[int] | None = None,
@@ -17,7 +21,7 @@ class ScheduleRepository(BaseRepository[Schedule]):
             lesson_numbers: list[int] | None = None,
             subjects: list[str] | None = None,
             rooms: list[int] | None = None,
-    ) -> list[Schedule]:
+    ) -> Sequence[Schedule]:
         stmt = select(self.model)
 
         if class_numbers:

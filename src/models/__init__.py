@@ -1,8 +1,15 @@
 from .base import Base
+from .call import Call
+from .schedule import Schedule
 from .students import Student
 from .teachers import Teacher
 from .users import User
-from .schedule import Schedule
-from .call import Call
 
-__all__ = ["Base", "Student", "Teacher", "User", "Schedule", "Call"]
+__all__ = [
+    "Base",
+    "Call",
+    "Schedule",
+    "Student",
+    "Teacher",
+    "User",
+]

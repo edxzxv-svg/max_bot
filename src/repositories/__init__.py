@@ -1,12 +1,13 @@
-from .user import UserRepository
+from .call import CallRepository
+from .schedule import ScheduleRepository
 from .student import StudentRepository
 from .teacher import TeacherRepository
-from .schedule import ScheduleRepository
-from .call import CallRepository
+from .user import UserRepository
 
 __all__ = [
-    'UserRepository',
-    'StudentRepository',
-    'TeacherRepository',
-    'ScheduleRepository',
+    "CallRepository",
+    "ScheduleRepository",
+    "StudentRepository",
+    "TeacherRepository",
+    "UserRepository",
 ]

@@ -1,13 +1,10 @@
 
-from emums import RequestStatus
-from emums.persons import UserRole
-from models import User
-from repositories import TeacherRepository
-from repositories.user import UserRepository
-from schemes.request import TeacherListRequest
-from schemes.response import TeacherListResponse, TeacherResponse
-from schemes.response.student import StudentListResponse
-from session import async_session_maker
+from src.enums import RequestStatus, UserRole
+from src.models import User
+from src.repositories import TeacherRepository, UserRepository
+from src.schemes.request import TeacherListRequest
+from src.schemes.response import TeacherListResponse, TeacherResponse
+from src.session import async_session_maker
 
 
 class TeacherService:
@@ -27,7 +24,7 @@ class TeacherService:
         async with async_session_maker() as session:
             if user.role not in (UserRole.ADMIN, UserRole.TEACHER):
                 return TeacherListResponse(
-                    status=StudentListResponse.Status.FAILED,
+                    status=RequestStatus.FAILED,
                     detail="Доступ запрещен"
                 )
 
@@ -46,7 +43,11 @@ class TeacherService:
                 status=RequestStatus.SUCCESS,
                 data=[
                     TeacherResponse(
-                        full_name=f"{row.last_name} {row.first_name} {row.second_name}",
+                        full_name=(
+                            f"{row.last_name} "
+                            f"{row.first_name} "
+                            f"{row.second_name}" if row.second_name else ""
+                        ),
                         birth_day=row.birth_day,
                         employment_date=row.employment_date,
                         education=row.education,

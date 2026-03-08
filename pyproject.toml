@@ -22,6 +22,7 @@ rodi = ">=2.0.8"
 speechrecognition = "^3.14.5"
 pydub = "0.25.1"
 ffmpeg-python = "0.2.0"
+openai-whisper = "^20231117"
 
 [tool.poetry.group.dev.dependencies]
 ruff=">=0.14.4,<0.15.0"
@@ -85,6 +86,7 @@ ignore = [
     "D400",
 
     "RUF001", # String contains ambiguous
+    "RUF002",
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -105,8 +107,7 @@ python_version = "3.12"
 strict = true
 pretty = true
 
-ignore_missing_imports = false
-disable_error_code = ["misc"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "alembic.*"
@@ -115,3 +116,9 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = "maxapi.*"
 ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = "pydub.*"
+ignore_missing_imports = true
+follow_imports = "skip"

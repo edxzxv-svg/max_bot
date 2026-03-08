@@ -1,13 +1,13 @@
 
-from emums import RequestStatus
-from emums.persons import UserRole
-from models import User
-from repositories import ScheduleRepository
-from repositories.user import UserRepository
-from schemes.request import ScheduleRequest
-from schemes.response import ScheduleResponse, ScheduleRow
-from schemes.response.student import StudentListResponse
-from session import async_session_maker
+from src.enums import RequestStatus, UserRole
+from src.models import User
+from src.repositories import ScheduleRepository, UserRepository
+from src.schemes.request import ScheduleRequest
+from src.schemes.response import (
+    ScheduleResponse,
+    ScheduleRow,
+)
+from src.session import async_session_maker
 
 
 class ScheduleService:
@@ -24,9 +24,13 @@ class ScheduleService:
             params: ScheduleRequest,
             user: User,
     ) -> ScheduleResponse:
-        if user.role not in [UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN]:
+        if user.role not in [
+            UserRole.STUDENT,
+            UserRole.TEACHER,
+            UserRole.ADMIN
+        ]:
             return ScheduleResponse(
-                status=StudentListResponse.Status.FAILED,
+                status=RequestStatus.FAILED,
                 detail="Доступ запрещен"
             )
 

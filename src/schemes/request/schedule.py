@@ -1,15 +1,44 @@
-from uuid import UUID
+from uuid import UUID, uuid4
+
 from pydantic import BaseModel, Field
 
 
 class ScheduleCreateRequest(BaseModel):
-    uuid: UUID
-    class_number: int
-    class_parallel: str
-    day_of_week: int
-    lesson_number: int
-    subject: str
-    room: int | None
+    uuid: UUID = Field(
+        title="Идентификатор",
+        description="Идентификатор",
+        examples=[uuid4()],
+    )
+    class_number: int = Field(
+        title="Класс",
+        description="Класс",
+        examples=[9, 8, 0],
+    )
+    class_parallel: str = Field(
+        title="Параллель",
+        description="Параллель",
+        examples=["А", "Б", "В"],
+    )
+    day_of_week: int = Field(
+        title="День недели",
+        description="День недели",
+        examples=[1, 2, 3],
+    )
+    lesson_number: int = Field(
+        title="Номер урока",
+        description="Номер урока",
+        examples=[1, 2, 3],
+    )
+    subject: str = Field(
+        title="Предмет",
+        description="Предмет",
+        examples=["Математика", "Физика"],
+    )
+    room: int | None = Field(
+        title="Кабинет",
+        description="Кабинет",
+        examples=["24", "8"],
+    )
 
 class ScheduleRequest(BaseModel):
     class_numbers: list[int] | None =  Field(
@@ -22,7 +51,7 @@ class ScheduleRequest(BaseModel):
         default=None,
         title="Параллель",
         description="Параллель",
-        examples=['А', 'Б', 'В'],
+        examples=["А", "Б", "В"],
     )
     day_of_weeks: list[int] | None =  Field(
         default=None,
@@ -40,11 +69,11 @@ class ScheduleRequest(BaseModel):
         default=None,
         title="Предмет",
         description="Предмет",
-        examples=['Математика', 'Физика'],
+        examples=["Математика", "Физика"],
     )
     rooms: list[int] | None =  Field(
         default=None,
         title="Кабинет",
         description="Кабинет",
-        examples=['24', '8'],
+        examples=["24", "8"],
     )

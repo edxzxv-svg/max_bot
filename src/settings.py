@@ -19,7 +19,7 @@ class MaxSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MAX_")
     TOKEN: str = ""
     CLIENT_ID: str = ""
-
+    MESSAGE_LENGTH: int  = 2048
 
 class PostgresSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POSTGRES_")

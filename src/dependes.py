@@ -1,10 +1,20 @@
 
 from rodi import Container
 
-from repositories import UserRepository, StudentRepository, TeacherRepository, ScheduleRepository
-from repositories import CallRepository
-from services import WeatherService, StudentService, ScheduleService
-from services import TeacherService, CallService
+from src.repositories import (
+    CallRepository,
+    ScheduleRepository,
+    StudentRepository,
+    TeacherRepository,
+    UserRepository,
+)
+from src.services import (
+    CallService,
+    ScheduleService,
+    StudentService,
+    TeacherService,
+    WeatherService,
+)
 
 container = Container()
 

@@ -1,7 +1,10 @@
 
 from datetime import time
+
 from pydantic import BaseModel, Field
-from emums import RequestStatus
+
+from src.enums import RequestStatus
+
 
 class CallRow(BaseModel):
     day_of_week: int = Field(
@@ -27,8 +30,8 @@ class CallRow(BaseModel):
 
 
 class CallResponse(BaseModel):
-    status: RequestStatus = Field(
-        None,
+    status: RequestStatus | None = Field(
+        default=None,
         title="Статус",
         description="Статус запроса",
     )
@@ -38,7 +41,7 @@ class CallResponse(BaseModel):
         description="Результат запроса",
     )
     detail: str | None = Field(
-        None,
+        default=None,
         title="Детали статуса",
         description="Детали статуса",
     )

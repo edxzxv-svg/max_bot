@@ -1,13 +1,14 @@
 
-from datetime import date, datetime
+from datetime import datetime
+
 from pydantic import BaseModel, Field
-from emums import RequestStatus
-from emums.persons import UserRole, UserStatus
+
+from src.enums import RequestStatus, UserRole, UserStatus
 
 
 class UserResponse(BaseModel):
     name: str | None = Field(
-        None,
+        default=None,
         title="Имя",
         description="Имя пользователя",
         min_length=2,
@@ -22,14 +23,14 @@ class UserResponse(BaseModel):
         description="Статус пользователя",
     )
     last_activity: datetime | None = Field(
-        None,
+        default=None,
         title="Последняя активность",
         description="УПоследняя активность",
     )
 
 class UserListResponse(BaseModel):
-    status: RequestStatus = Field(
-        None,
+    status: RequestStatus | None = Field(
+        default=None,
         title="Статус",
         description="Статус запроса",
     )
@@ -39,19 +40,19 @@ class UserListResponse(BaseModel):
         description="Результат запроса",
     )
     detail: str | None = Field(
-        None,
+        default=None,
         title="Детали статуса",
         description="Детали статуса",
     )
 
 class SetNameResponse(BaseModel):
-    status: RequestStatus = Field(
-        None,
+    status: RequestStatus | None = Field(
+        default=None,
         title="Статус",
         description="Статус запроса",
     )
     detail: str | None = Field(
-        None,
+        default=None,
         title="Детали статуса",
         description="Детали статуса",
     )

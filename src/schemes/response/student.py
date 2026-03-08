@@ -1,7 +1,10 @@
 
 from datetime import date
+
 from pydantic import BaseModel, Field
-from emums import RequestStatus
+
+from src.enums import RequestStatus
+
 
 class StudentBrief(BaseModel):
     full_name: str = Field(
@@ -28,8 +31,8 @@ class StudentBrief(BaseModel):
     )
 
 class StudentListResponse(BaseModel):
-    status: RequestStatus = Field(
-        None,
+    status: RequestStatus | None = Field(
+        default=None,
         title="Статус",
         description="Статус запроса",
     )
@@ -39,7 +42,7 @@ class StudentListResponse(BaseModel):
         description="Результат запроса",
     )
     detail: str | None = Field(
-        None,
+        default=None,
         title="Детали статуса",
         description="Детали статуса",
     )

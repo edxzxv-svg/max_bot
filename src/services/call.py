@@ -1,13 +1,10 @@
 
-from emums import RequestStatus
-from emums.persons import UserRole
-from models import User
-from repositories import CallRepository
-from repositories.user import UserRepository
-from schemes.request import CallRequest
-from schemes.response import CallResponse, CallRow
-from schemes.response.student import StudentListResponse
-from session import async_session_maker
+from src.enums import RequestStatus, UserRole
+from src.models import User
+from src.repositories import CallRepository, UserRepository
+from src.schemes.request import CallRequest
+from src.schemes.response import CallResponse, CallRow
+from src.session import async_session_maker
 
 
 class CallService:
@@ -24,9 +21,13 @@ class CallService:
             params: CallRequest,
             user: User,
     ) -> CallResponse:
-        if user.role not in [UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN]:
+        if user.role not in [
+            UserRole.STUDENT,
+            UserRole.TEACHER,
+            UserRole.ADMIN
+        ]:
             return CallResponse(
-                status=StudentListResponse.Status.FAILED,
+                status=RequestStatus.FAILED,
                 detail="Доступ запрещен"
             )
 

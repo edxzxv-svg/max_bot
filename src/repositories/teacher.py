@@ -1,7 +1,11 @@
+from collections.abc import Sequence
 from datetime import date, datetime, time
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import  Teacher
+
+from src.models import Teacher
+
 from .base import BaseRepository
 
 
@@ -9,7 +13,7 @@ class TeacherRepository(BaseRepository[Teacher]):
     def __init__(self) -> None:
         super().__init__(Teacher)
 
-    async def get_list(
+    async def get_list( # noqa: PLR0913
             self,
             session: AsyncSession,
             first_names: list[str] | None = None,
@@ -19,7 +23,7 @@ class TeacherRepository(BaseRepository[Teacher]):
             birth_day_le: date | None = None,
             employment_date_ge: date | None = None,
             employment_date_le: date | None = None,
-    ) -> list[Teacher]:
+    ) -> Sequence[Teacher]:
         stmt = select(self.model)
 
         if first_names:
@@ -35,13 +39,21 @@ class TeacherRepository(BaseRepository[Teacher]):
             stmt = stmt.where(self.model.birth_day >= birth_day_ge)
 
         if birth_day_le:
-            stmt = stmt.where(self.model.birth_day <= datetime.combine(birth_day_le, time.max))
+            stmt = stmt.where(
+                self.model.birth_day <= (
+                    datetime.combine(birth_day_le, time.max)
+                )
+            )
 
         if employment_date_ge:
             stmt = stmt.where(self.model.employment_date >= employment_date_ge)
 
         if employment_date_le:
-            stmt = stmt.where(self.model.employment_date <= datetime.combine(employment_date_le, time.max))
+            stmt = stmt.where(
+                self.model.employment_date <= (
+                    datetime.combine(employment_date_le, time.max)
+                )
+            )
 
         result = await session.execute(stmt)
         return result.scalars().all() if result else []

@@ -1,8 +1,11 @@
-from datetime import date
+from collections.abc import Sequence
+from datetime import time
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import Call
+
+from src.models import Call
+
 from .base import BaseRepository
 
 
@@ -10,16 +13,16 @@ class CallRepository(BaseRepository[Call]):
     def __init__(self) -> None:
         super().__init__(Call)
 
-    async def get_list(
+    async def get_list( # noqa: PLR0913
             self,
             session: AsyncSession,
             day_of_weeks: list[int] | None = None,
             lesson_numbers: list[int] | None = None,
-            start_time_ge: date | None = None,
-            start_time_le: date | None = None,
-            end_time_ge: date | None = None,
-            end_time_le: date | None = None,
-    ) -> list[Call]:
+            start_time_ge: time | None = None,
+            start_time_le: time | None = None,
+            end_time_ge: time | None = None,
+            end_time_le: time | None = None,
+    ) -> Sequence[Call]:
         stmt = select(self.model)
 
         if day_of_weeks:

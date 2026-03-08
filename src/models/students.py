@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import Date, Integer, String, text, ForeignKey
+from sqlalchemy import Date, ForeignKey, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -25,18 +25,22 @@ class Student(Base):
     )
     first_name = mapped_column(
         String(50),
+        index=True,
         comment="Фамилия",
     )
     last_name = mapped_column(
         String(50),
+        index=True,
         comment="Имя",
     )
     second_name = mapped_column(
         String(50),
+        index=True,
         comment="Отчество",
     )
     birth_day = mapped_column(
         Date,
+        index=True,
         comment="Дата рождения",
     )
     class_number = mapped_column(
@@ -45,5 +49,6 @@ class Student(Base):
     )
     class_parallel = mapped_column(
         String(1),
+        index=True,
         comment="Параллель",
     )

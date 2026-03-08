@@ -1,12 +1,15 @@
 
-from emums import RequestStatus
-from emums.persons import UserRole
-from models import User
-from repositories.user import UserRepository
-from schemes.request import StudentListRequest
-from repositories.student import StudentRepository
-from schemes.response.student import StudentListResponse, StudentBrief
-from session import async_session_maker
+from src.enums import RequestStatus, UserRole
+from src.models import User
+from src.repositories import StudentRepository, UserRepository
+from src.schemes.request import (
+    StudentListRequest,
+)
+from src.schemes.response import (
+    StudentBrief,
+    StudentListResponse,
+)
+from src.session import async_session_maker
 
 
 class StudentService:
@@ -26,17 +29,19 @@ class StudentService:
         async with async_session_maker() as session:
             match user.role:
                 case UserRole.STUDENT:
-                    student = await self.student_repo.get_by(session, user_id=user.user_id)
+                    student = await self.student_repo.get_by(
+                        session, user_id=user.user_id
+                    )
                     if not student:
                         return StudentListResponse(
-                            status=StudentListResponse.Status.FAILED,
+                            status=RequestStatus.FAILED,
                             detail="Доступ запрещен"
                         )
                     params.class_numbers = [student.class_number]
                     params.class_parallels = [student.class_parallel]
                 case UserRole.GUEST:
                     return StudentListResponse(
-                        status=StudentListResponse.Status.FAILED,
+                        status=RequestStatus.FAILED,
                         detail="Доступ запрещен"
                     )
 
@@ -55,7 +60,11 @@ class StudentService:
                 status=RequestStatus.SUCCESS,
                 data=[
                     StudentBrief(
-                        full_name=f"{row.last_name} {row.first_name} {row.second_name}",
+                        full_name=(
+                            f"{row.last_name} "
+                            f"{row.first_name} "
+                            f"{row.second_name}" if row.second_name else ""
+                        ),
                         birth_day=row.birth_day,
                         class_number=row.class_number,
                         class_parallel=row.class_parallel,

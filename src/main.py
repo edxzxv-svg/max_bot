@@ -4,7 +4,7 @@ import logging
 from maxapi import Dispatcher, F
 from maxapi.types import MessageCreated
 
-from dependes import setup_dependencies
+from src.dependes import setup_dependencies
 from src.maxbot import MaxBot
 from src.settings import settings
 
@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 setup_dependencies()
-bot = MaxBot(settings.max.TOKEN)
+bot = MaxBot(settings.max.TOKEN, stream=False)
 dp = Dispatcher()
 
 

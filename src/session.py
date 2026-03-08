@@ -1,6 +1,4 @@
-from collections.abc import AsyncGenerator
 
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -25,14 +23,3 @@ async_session_maker = async_sessionmaker(
     autocommit=False,
     autoflush=True,
 )
-
-
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency for getting async session."""
-    try:
-        async with async_session_maker() as session:
-            yield session
-    except SQLAlchemyError as e:
-        raise e from None
-    finally:
-        await session.close()

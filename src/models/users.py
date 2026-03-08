@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.models.base import Base
+from .base import Base
 
 
 class User(Base):
@@ -16,11 +16,26 @@ class User(Base):
     )
     user_id: Mapped[int] = mapped_column(
         unique=True,
+        index=True,
         nullable=True,
     )
-    name: Mapped[str | None] = mapped_column(String(50))
-    role: Mapped[str] = mapped_column(String(50))
-    status: Mapped[str] = mapped_column(String(10))
+    name: Mapped[str | None] = mapped_column(
+        String(50),
+        index=True,
+        comment="Имя пользователя",
+    )
+    role: Mapped[str] = mapped_column(
+        String(50),
+        index=True,
+        comment="Роль пользователя",
+    )
+    status: Mapped[str] = mapped_column(
+        String(10),
+        index = True,
+        comment = "Статус пользователя",
+    )
     last_activity_at: Mapped[datetime | None] = mapped_column(
         DateTime,
+        index=True,
+        comment="Дата и время последней активности пользователя",
     )

@@ -5,7 +5,7 @@ class UserRole(StrEnum):
     ADMIN = "admin"
     TEACHER = "teacher"
     STUDENT = "student"
-    GUEST = "quest"
+    GUEST = "guest"
 
 
 class UserStatus(StrEnum):
